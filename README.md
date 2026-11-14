@@ -2,9 +2,7 @@
   <picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png"><img src="assets/logo.png" alt="X-OCN Playback Bridge" width="620"></picture>
 </p>
 
-# X-OCN Playback Bridge
-
-Play Sony X-OCN MXF clips in **MPC-HC** or **mpv**, and generate Explorer thumbnails on Windows. The bridge uses your locally installed Sony RAW development library; Sony software and codecs are not bundled.
+X-OCN Playback Bridge makes all your precious CineAlta files behave like any other MP4 or MOV clips in your system - because why they wouldn't? Enjoy Sony X-OCN MXF clips from the comfort of **MPC-HC** or **mpv**, and generate Explorer thumbnails on Windows. The bridge auto-detects and uses your local Sony RAW library - if you don't have one, the links are provided within the installer.
 
 ## Download and install
 
@@ -20,7 +18,7 @@ The source filter supports Sony X-OCN MXF variants **Compact 1 (C1), Compact 2 (
 
 - **MPC-HC**: full active raster, embedded PCM audio, MXF display aspect and anamorphic desqueeze. Filter properties show file metadata and allow a live display LUT toggle.
 - **mpv**: playback through the DirectShow and AviSynth+ bridge. Clips at least 7680 pixels wide use a half-resolution preview to improve performance.
-- **Explorer**: optional X-OCN thumbnail provider. For other MXF formats it can fall back to Icaros when installed; setup refuses to replace an unknown existing MXF thumbnail provider.
+- **Windows Explorer**: optional X-OCN thumbnail provider. For other MXF formats it can fall back to Icaros when installed; setup refuses to replace an unknown existing MXF thumbnail provider.
 
 The filter produces 8-bit RGB with an approximate camera-native S-Log3 preview. It is not a calibrated S-Gamut3.Cine transform. Desqueeze settings require reopening the clip. Full-resolution 8K may drop frames, especially at startup or after seeking; prebuffering is not implemented.
 
@@ -41,5 +39,3 @@ The filter build uses Visual Studio C++ tools and the Microsoft Windows Classic 
 ## Credits and dependencies
 
 Created by **magoowa**. Thanks to [Dec18 Studios and fx5-xocn-tools](https://github.com/Dec18studios/fx5-xocn-tools), Microsoft DirectShow BaseClasses, and the AviSynth+ and DirectShowSource contributors. Their license notices are in [`licenses/`](licenses/). SonyRawDev, DaVinci Resolve, Sony applications, MPC-HC and mpv are separate dependencies and are not redistributed.
-
-The installer has been checked with isolated install/restore tests and local clip tests. A full clean-machine installation has not yet been verified.
