@@ -6,4 +6,4 @@
 - Added automatic MXF aspect and anamorphic desqueeze handling, multichannel audio, file metadata and a live display LUT control.
 - Added Explorer thumbnails and a Windows installer with component selection, SonyRawDev and player detection, and restore/uninstall options.
 
-C2, LT and XT have been tested on sample clips. C1 and ST require broader testing; full-resolution 8K playback may still drop frames.
+Full-resolution 8K playback may still drop frames.

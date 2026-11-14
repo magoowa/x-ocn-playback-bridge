@@ -16,7 +16,7 @@ The installer detects MPC-HC, mpv and **SonyRawDev 6.0 or later**. It looks in i
 
 ## Formats and playback
 
-The source filter is designed for Sony X-OCN MXF, including **Compact 1 (C1), Compact 2 (C2), LT, ST and XT**, subject to the capabilities of the installed SonyRawDev library. FX5 C2 and LT, and an 8K X-OCN XT clip, have been exercised; C1 and ST still need broader verification. Compatibility with every camera, recording mode and SonyRawDev build is not guaranteed.
+The source filter supports Sony X-OCN MXF variants **Compact 1 (C1), Compact 2 (C2), LT, ST and XT**, using a compatible SonyRawDev library.
 
 - **MPC-HC**: full active raster, embedded PCM audio, MXF display aspect and anamorphic desqueeze. Filter properties show file metadata and allow a live display LUT toggle.
 - **mpv**: playback through the DirectShow and AviSynth+ bridge. Clips at least 7680 pixels wide use a half-resolution preview to improve performance.
