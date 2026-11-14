@@ -38,4 +38,4 @@ The filter build uses Visual Studio C++ tools and the Microsoft Windows Classic 
 
 ## Credits and dependencies
 
-Created by **magoowa**. Thanks to [Dec18 Studios and fx5-xocn-tools](https://github.com/Dec18studios/fx5-xocn-tools), Microsoft DirectShow BaseClasses, and the AviSynth+ and DirectShowSource contributors. Their license notices are in [`licenses/`](licenses/). SonyRawDev, DaVinci Resolve, Sony applications, MPC-HC and mpv are separate dependencies and are not redistributed.
+Created by **magoowa** within ChatGPT's Codex app. Thanks to [Dec18 Studios and fx5-xocn-tools](https://github.com/Dec18studios/fx5-xocn-tools), Microsoft DirectShow BaseClasses, and the AviSynth+ and DirectShowSource contributors. Their license notices are in [`licenses/`](licenses/). SonyRawDev, DaVinci Resolve, Sony applications, MPC-HC and mpv are separate dependencies and are not redistributed.
