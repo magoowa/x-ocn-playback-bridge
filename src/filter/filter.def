@@ -1,0 +1,4 @@
+LIBRARY XocnSource.ax
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

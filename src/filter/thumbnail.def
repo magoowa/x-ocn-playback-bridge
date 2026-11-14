@@ -1,0 +1,4 @@
+LIBRARY XocnThumbnail.dll
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow PRIVATE

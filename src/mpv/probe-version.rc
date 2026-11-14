@@ -1,0 +1,25 @@
+#include <windows.h>
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,5,2026,1114
+ PRODUCTVERSION 1,5,2026,1114
+ FILEFLAGSMASK 0x3fL
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+BEGIN
+ BLOCK "StringFileInfo"
+ BEGIN
+  BLOCK "040904b0"
+  BEGIN
+   VALUE "CompanyName", "magoowa"
+   VALUE "FileDescription", "X-OCN mpv metadata probe"
+   VALUE "FileVersion", "1.5.2026.1114"
+   VALUE "ProductName", "XOCN-MPC"
+   VALUE "ProductVersion", "1.5.2026.1114 (2026-11-14)"
+   VALUE "OriginalFilename", "xocn-mpv-probe.exe"
+  END
+ END
+ BLOCK "VarFileInfo"
+ BEGIN
+  VALUE "Translation", 0x0409, 1200
+ END
+END

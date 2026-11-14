@@ -1,0 +1,77 @@
+﻿{
+  "product": "X-OCN Playback Bridge",
+  "version": "1.13.2026.1114",
+  "date_code": "2026-11-14",
+  "author": "magoowa",
+  "components": {
+    "source_filter": "1.10.2026.1114",
+    "thumbnail_provider": "1.3.2026.1114",
+    "mpv_bridge": "1.5.2026.1114"
+  },
+  "files": [
+    {
+      "file": "Backend.ps1",
+      "sha256": "f29cfa66b1741df0f5aee7d6f684548e5a2f6cbdd6cd9dc22045fb648346e4e6"
+    },
+    {
+      "file": "Detect.ps1",
+      "sha256": "796aa7b9d00ba1596c9b78e83c095e99de0fd336a62002021718a3dba802aad5"
+    },
+    {
+      "file": "Journal.ps1",
+      "sha256": "132c06597a6708a4b7934a2765d42ece818e291de88a7f8e27713c19ab1b6621"
+    },
+    {
+      "file": "LICENSE-AviSynth.txt",
+      "sha256": "6a52c5ef39b34ffc93f7391b4257a84d0a30f147b1b9b3273df0e7bfc9a039cf"
+    },
+    {
+      "file": "LICENSE-DirectShow-baseclasses.txt",
+      "sha256": "49885c38b55a2020f72af1d4b3c76059a778bf2e2cb6871ed3e11c268995f98f"
+    },
+    {
+      "file": "LICENSE-fx5-xocn-tools.txt",
+      "sha256": "7991ec1c9c7e35aff99d0a37cd02b795f95cd844d459add10721d7dd51984402"
+    },
+    {
+      "file": "logo.png",
+      "sha256": "8bc23430c1086fc8f4f4dbd50a45031487f42b9ea0886fe2f287cb43f92574cc"
+    },
+    {
+      "file": "README.md",
+      "sha256": "f3bccdd10e60f2d626d2c809d442d156a911dfb036b9b50683ce8743508e7b7e"
+    },
+    {
+      "file": "Setup.ps1",
+      "sha256": "8fa0370b1448b18b076c3fb73756063f361fad51b2b4f20f347a2177da621239"
+    },
+    {
+      "file": "Status.ps1",
+      "sha256": "ff316063618f65fb91c03fb03c8cdd29fb456ce7f01563bf3e65ed32bdaa3696"
+    },
+    {
+      "file": "payload/AviSynth.dll",
+      "sha256": "8f7d07917e4b364df5fd7f1b8b3c1e135465d73325f8d25bc4354dd6435afab4"
+    },
+    {
+      "file": "payload/DirectShowSource.dll",
+      "sha256": "e52dbc44c370de400d1e3c19d7b8bfa7bb61e0a1417dc2f69d16fbd88d7fbeb3"
+    },
+    {
+      "file": "payload/xocn-mpv-probe.exe",
+      "sha256": "8ade15f5c6e7466b3522fe1c8f64a349d6a7ba0173246451794836a80c0a2051"
+    },
+    {
+      "file": "payload/xocn.lua",
+      "sha256": "c0f9472af77f8bfd3597831b876607f4dc2e29b4346225688e70040e6dcc6ae7"
+    },
+    {
+      "file": "payload/XocnSource.ax",
+      "sha256": "017d3d8c418a7fa8ee794c0460345737d4a6d7e6a941cfc6af252f87a0d057b1"
+    },
+    {
+      "file": "payload/XocnThumbnail.dll",
+      "sha256": "d9ffac5924b3a990e4131763433a6644ec58ccebdfe60a1e871859e02a00d0fd"
+    }
+  ]
+}
