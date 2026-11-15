@@ -1,8 +1,8 @@
 #include <windows.h>
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,10,2026,1114
- PRODUCTVERSION 1,10,2026,1114
+ FILEVERSION 1,22,2026,1115
+ PRODUCTVERSION 1,22,2026,1115
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0
  FILEOS VOS_NT_WINDOWS32
@@ -13,12 +13,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription", "Sony X-OCN DirectShow Source"
-            VALUE "FileVersion", "1.10.2026.1114"
+            VALUE "FileDescription", "X-OCN Playback Bridge"
+            VALUE "FileVersion", "1.22.2026.1115"
             VALUE "CompanyName", "magoowa"
             VALUE "LegalCopyright", "magoowa"
-            VALUE "ProductName", "XOCN-MPC"
-            VALUE "ProductVersion", "1.10.2026.1114 (2026-11-14)"
+            VALUE "ProductName", "X-OCN Playback Bridge"
+            VALUE "ProductVersion", "1.22.2026.1115"
+            VALUE "InternalName", "XocnSource"
             VALUE "OriginalFilename", "XocnSource.ax"
         END
     END
@@ -29,22 +30,34 @@ BEGIN
 END
 
 #pragma code_page(65001)
-101 DIALOGEX 0, 0, 300, 181
+101 DIALOGEX 0, 0, 316, 236
 STYLE DS_SETFONT | WS_CHILD | WS_CAPTION
 CAPTION "X-OCN"
 FONT 9, "Segoe UI"
 BEGIN
-    LTEXT "File:", -1, 10, 8, 25, 12
-    LTEXT "", 1004, 38, 8, 250, 12
-    LTEXT "", 1001, 10, 25, 280, 12
-    LTEXT "", 1002, 10, 42, 280, 12
-    LTEXT "", 1005, 10, 59, 280, 12
-    LTEXT "", 1006, 10, 76, 280, 12
-    LTEXT "Desqueeze:", -1, 10, 98, 58, 12
-    COMBOBOX 1003, 75, 95, 145, 100, CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
-    AUTOCHECKBOX "Apply display LUT (soft preview)", 1007, 10, 117, 230, 13, WS_TABSTOP
-    LTEXT "LUT changes are live; reopen for desqueeze.", -1, 10, 140, 280, 12
-    LTEXT "X-OCN 1.10.2026.1114  |  Authored by magoowa", -1, 10, 163, 280, 12
+    LTEXT "File", -1, 12, 10, 76, 12
+    LTEXT "", 1004, 92, 10, 212, 14, SS_ENDELLIPSIS
+    LTEXT "Camera model", -1, 12, 27, 76, 12
+    LTEXT "Unknown", 1009, 92, 27, 212, 12
+    LTEXT "Picture", -1, 12, 44, 76, 12
+    LTEXT "", 1001, 92, 44, 212, 12
+    LTEXT "Display aspect", -1, 12, 61, 76, 12
+    LTEXT "", 1002, 92, 61, 212, 12
+    LTEXT "Duration", -1, 12, 78, 76, 12
+    LTEXT "", 1005, 92, 78, 212, 12
+    LTEXT "Audio", -1, 12, 95, 76, 12
+    LTEXT "", 1006, 92, 95, 212, 12
+    LTEXT "Desqueeze", -1, 12, 118, 76, 12
+    COMBOBOX 1003, 92, 115, 212, 100, CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
+    LTEXT "Decoder", -1, 12, 138, 76, 12
+    COMBOBOX 1008, 92, 135, 212, 70, CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL
+    AUTOCHECKBOX "Contrast adjustment", 1007, 92, 155, 212, 13, WS_TABSTOP
+    LTEXT "Recorded LUT", -1, 12, 174, 76, 12
+    LTEXT "", 1010, 92, 174, 212, 12, SS_ENDELLIPSIS
+    LTEXT "System OpenCL", -1, 12, 192, 76, 12
+    LTEXT "", 1011, 92, 192, 212, 12
+    LTEXT "Reopen the clip for decoder or desqueeze changes.", -1, 12, 208, 292, 12
+    LTEXT "X-OCN 1.22.2026.1115  |  Authored by magoowa", -1, 12, 222, 292, 12
 END
 STRINGTABLE
 BEGIN

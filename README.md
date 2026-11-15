@@ -6,11 +6,19 @@ X-OCN Playback Bridge makes all your precious CineAlta files behave like any oth
 
 ## Download and install
 
-1. Download the [Windows x64 installer](installer/X-OCN-Playback-Bridge-Setup-1.13.2026.1114.exe?raw=true).
+1. Download the [Windows x64 installer](installer/X-OCN-Playback-Bridge-Setup-1.23.2026.1115.exe?raw=true).
 2. Close MPC-HC and mpv, then run the installer. Windows will request administrator permission for system integration.
 3. Select MPC-HC, mpv, Explorer thumbnails, or a combination. Open an X-OCN MXF in your player.
 
-The installer detects MPC-HC, mpv and **SonyRawDev 6.0 or later**. It looks in installed DaVinci Resolve, Sony RAW Viewer, Sony Catalyst and Adobe Premiere Pro locations, including common per-user paths. If needed, install [Sony RAW Viewer](https://www.sony.com/electronics/support/software/00408235) or [Catalyst Prepare](https://support.d-imaging.sony.co.jp/disoft_DL/CatalystPrepareV3_DL/win?fm=en). The installer does not change Windows file associations. Portable installations and unusual paths may require manual setup.
+The installer detects MPC-HC, mpv and **SonyRawDev 6.0 or later**. Setup and filter properties also report whether the system OpenCL runtime sees a GPU. It looks in installed DaVinci Resolve, Sony RAW Viewer, Sony Catalyst and Adobe Premiere Pro locations, including common per-user paths. If needed, install [Sony RAW Viewer](https://www.sony.com/electronics/support/software/00408235) or [Catalyst Prepare](https://support.d-imaging.sony.co.jp/disoft_DL/CatalystPrepareV3_DL/win?fm=en). The installer does not change Windows file associations. Portable installations and unusual paths may require manual setup.
+
+## MPC Video Renderer for GPU playback
+
+Use MPC-HC x64 with **MPC Video Renderer**. In MPC-HC, open **Options → Playback → Output** and select **MPC Video Renderer**. In the renderer properties, enable **Use Direct3D 11**. Restart MPC-HC after applying changes.
+
+Setup shows the detected MPC-HC version and renderer status. Select **Set MPC Video Renderer with Direct3D 11 for the current user** to apply the setting during installation. For a portable MPC-HC installation, change it in the player. If MPC Video Renderer is missing, install it before selecting it.
+
+The bridge delivers decoded frames to MPC Video Renderer as shared Direct3D 11 textures when the GPU supports OpenCL/D3D11 sharing. This avoids copying the uncompressed frame through system RAM, which can consume a large part of the frame budget at 8K. The fallback uses a system-memory video sample and can be slower.
 
 ## Formats and playback
 
@@ -20,7 +28,7 @@ The source filter supports Sony X-OCN MXF variants **Compact 1 (C1), Compact 2 (
 - **mpv**: playback through the DirectShow and AviSynth+ bridge. Clips at least 7680 pixels wide use a half-resolution preview to improve performance.
 - **Windows Explorer**: optional X-OCN thumbnail provider. For other MXF formats it can fall back to Icaros when installed; setup refuses to replace an unknown existing MXF thumbnail provider.
 
-The filter produces 8-bit RGB with an approximate camera-native S-Log3 preview. It is not a calibrated S-Gamut3.Cine transform. Desqueeze settings require reopening the clip. Full-resolution 8K may drop frames, especially at startup or after seeking; prebuffering is not implemented.
+The filter produces 8-bit RGB with an approximate camera-native S-Log3 preview. It is not a calibrated S-Gamut3.Cine transform. Desqueeze settings require reopening the clip. Automatic mode prefers full-resolution GPU playback for compatible X-OCN clips with NVIDIA OpenCL/D3D11 sharing and MPC Video Renderer. For other configurations, playback uses the available fallback. Decoder changes take effect when the clip is reopened.
 
 ## Restore or uninstall
 

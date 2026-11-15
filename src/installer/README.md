@@ -1,6 +1,6 @@
 ﻿# X-OCN Playback Bridge
 
-Installer version 1.13.2026.1114 · Authored by magoowa
+Installer version 2026-11-14 18:22 · Authored by magoowa
 
 Run the **X-OCN Playback Bridge Setup.exe** installer. Windows will request administrator permission, which is required for the Explorer thumbnail handler and installations of mpv under Program Files.
 
@@ -21,3 +21,9 @@ The thumbnail provider falls back to Icaros for other MXF formats when Icaros is
 - SonyRawDev, DaVinci Resolve, Sony software, MPC-HC and mpv are separately installed and are not redistributed.
 
 The requested startup/seek prebuffer for 8K is not implemented; dropped frames can still occur. The filter outputs an approximate 8-bit camera-native S-Log3 preview, not calibrated S-Gamut3.Cine.
+
+## MPC Video Renderer
+
+For GPU playback in MPC-HC x64, choose MPC Video Renderer under Options > Playback > Output, then enable Use Direct3D 11 in the renderer settings. Installer setup shows the detected player version and can apply both settings for the current user. For portable MPC-HC, change the settings inside MPC-HC.
+
+The filter can pass shared Direct3D 11 textures directly to MPC Video Renderer on supported GPUs. This avoids sending uncompressed frames through system RAM and improves headroom for full-resolution 8K.

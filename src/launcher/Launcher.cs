@@ -1,5 +1,6 @@
 using System;
-using System.Diagnostics;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
 using System.IO;
 using System.IO.Compression;
 using System.Reflection;
@@ -9,8 +10,14 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("magoowa")]
 [assembly: AssemblyProduct("X-OCN Playback Bridge")]
 [assembly: AssemblyCopyright("magoowa")]
-[assembly: AssemblyVersion("1.13.2026.1114")]
-[assembly: AssemblyFileVersion("1.13.2026.1114")]
+[assembly: AssemblyInformationalVersion("1.23.2026.1115")]
+[assembly: AssemblyVersion("1.23.2026.1115")]
+[assembly: AssemblyFileVersion("1.23.2026.1115")]
+
+public static class SetupDisplay {
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    public static extern uint GetDpiForWindow(IntPtr window);
+}
 
 internal static class Program {
     [STAThread]
@@ -26,19 +33,19 @@ internal static class Program {
             }
             string content = Path.Combine(directory, "content");
             ZipFile.ExtractToDirectory(archive, content);
-            string powershell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"WindowsPowerShell\v1.0\powershell.exe");
-            var start = new ProcessStartInfo {
-                FileName = powershell,
-                Arguments = "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(content, "Setup.ps1") + "\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                WorkingDirectory = content
-            };
-            start.EnvironmentVariables["XOCN_SETUP_EXECUTABLE"] = Assembly.GetExecutingAssembly().Location;
-            using (Process process = Process.Start(start)) {
-                process.WaitForExit();
-                if (process.ExitCode != 0) throw new InvalidOperationException("Setup could not start (error " + process.ExitCode + ").");
+            Environment.SetEnvironmentVariable("XOCN_SETUP_EXECUTABLE", Assembly.GetExecutingAssembly().Location);
+            using (var runspace = RunspaceFactory.CreateRunspace()) {
+                runspace.ThreadOptions = PSThreadOptions.UseCurrentThread;
+                runspace.Open();
+                using (var setup = PowerShell.Create()) {
+                    setup.Runspace = runspace;
+                    setup.AddCommand(Path.Combine(content, "Setup.ps1"));
+                    setup.Invoke();
+                    if (setup.Streams.Error.Count != 0)
+                        throw new InvalidOperationException(setup.Streams.Error[0].ToString());
+                    if (setup.InvocationStateInfo.State == PSInvocationState.Failed)
+                        throw new InvalidOperationException("Setup failed.", setup.InvocationStateInfo.Reason);
+                }
             }
             return 0;
         } catch (Exception e) {

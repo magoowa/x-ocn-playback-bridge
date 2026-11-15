@@ -1,24 +1,17 @@
-﻿Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-public static class BridgeDpi {
-    [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
-}
-'@
-try { [void][BridgeDpi]::SetProcessDpiAwarenessContext([IntPtr](-4)) } catch { }
-Add-Type -AssemblyName System.Windows.Forms
+﻿Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
 . "$PSScriptRoot\Detect.ps1"
 . "$PSScriptRoot\Backend.ps1"
 . "$PSScriptRoot\Status.ps1"
 $form = New-Object Windows.Forms.Form
-$form.AutoScaleMode=[Windows.Forms.AutoScaleMode]::None
+$form.SuspendLayout()
+$form.AutoScaleMode = [Windows.Forms.AutoScaleMode]::None
 $form.Text='X-OCN Playback Bridge — Setup'
 if ($env:XOCN_SETUP_EXECUTABLE -and (Test-Path -LiteralPath $env:XOCN_SETUP_EXECUTABLE)) {
     $form.Icon=[Drawing.Icon]::ExtractAssociatedIcon($env:XOCN_SETUP_EXECUTABLE)
 }
-$form.ClientSize=New-Object Drawing.Size(780,790)
+$form.ClientSize=New-Object Drawing.Size(780,930)
 $form.StartPosition='CenterScreen'
 $form.BackColor=[Drawing.Color]::FromArgb(12,18,29)
 $form.ForeColor=[Drawing.Color]::White
@@ -31,9 +24,8 @@ function Label([string]$text,[int]$x,[int]$y,[int]$w,[int]$h) {
 function Button([string]$text,[int]$x,[int]$y,[int]$w) {
     $b=New-Object Windows.Forms.Button; $b.Text=$text; $b.SetBounds($x,$y,$w,42); $b.FlatStyle='Flat'; $b.BackColor=[Drawing.Color]::FromArgb(38,59,80); $b.ForeColor=[Drawing.Color]::White; $form.Controls.Add($b); return $b
 }
-$picture=New-Object Windows.Forms.PictureBox
-$picture.Image=[Drawing.Image]::FromFile((Join-Path $PSScriptRoot 'logo.png'))
-$picture.SizeMode='Zoom'; $picture.SetBounds(34,20,600,70); $form.Controls.Add($picture)
+$title=Label 'X-OCN Playback Bridge' 36 21 700 68
+$title.Font=New-Object Drawing.Font('Segoe UI',28)
 $t=Label 'DETECTED SOFTWARE' 36 105 700 25; $t.ForeColor=[Drawing.Color]::FromArgb(115,199,236)
 $mpcVersion=if($player){[Diagnostics.FileVersionInfo]::GetVersionInfo($player).FileVersion}else{'Not found'}
 $mpvVersion=if($mpv){[Diagnostics.FileVersionInfo]::GetVersionInfo($mpv).FileVersion}else{'Not found'}
@@ -55,21 +47,50 @@ for($i=0;$i -lt $sonyPaths.Count;$i++) {
 }
 if($sonyBox.Items.Count){$sonyBox.SelectedIndex=$selected}
 $form.Controls.Add($sonyBox)
-$a=Label 'Best performance currently: MPC-HC. mpv uses 4K preview for 8K.' 36 330 700 30
+$a=Label "System OpenCL (x64): $(Get-BridgeOpenClStatus)" 36 330 700 30
 $a.ForeColor=[Drawing.Color]::FromArgb(164,179,194)
-$null=Label 'SELECT COMPONENTS  |  Installed status updates live' 36 369 700 25
 function Check([string]$text,[int]$y,[bool]$checked) {
     $c=New-Object Windows.Forms.CheckBox; $c.Text=$text; $c.SetBounds(39,$y,690,29); $c.Checked=$checked; $form.Controls.Add($c); return $c
 }
+$rendererLabel=Label '' 36 361 700 44
+$filterLabel=Label '' 36 441 700 49
+$scope=New-Object Windows.Forms.ComboBox
+$scope.DropDownStyle='DropDownList'
+$scope.SetBounds(36,496,260,28)
+[void]$scope.Items.Add('Current user')
+[void]$scope.Items.Add('All users (MPC-HC and thumbnails)')
+$scope.SelectedIndex=0
+$form.Controls.Add($scope)
 $currentState=Get-BridgeInstalledState $mpv
-$mpcBox=Check 'MPC-HC playback' 400 $currentState.Mpc
-$mpvBox=Check 'mpv playback' 436 $currentState.Mpv
-$thumbBox=Check 'Windows Explorer thumbnails' 472 $currentState.Thumbnails
+$mpcBox=Check 'MPC-HC playback' 540 $currentState.Mpc
+$mpvBox=Check 'mpv playback' 576 $currentState.Mpv
+$scope.Add_SelectedIndexChanged({ $mpvBox.Enabled=$scope.SelectedIndex -eq 0 })
+$thumbBox=Check 'Windows Explorer thumbnails' 612 $currentState.Thumbnails
+$rendererBox=Check 'Set MPC Video Renderer with Direct3D 11 for the current user' 408 $false
+function Update-RendererState {
+    $renderer = Get-BridgeMpcRenderer $player
+    $rendererBox.Enabled = [bool]($mpcBox.Checked -and $renderer.Available -and -not $renderer.Portable)
+    if (-not $renderer) {
+        $rendererLabel.Text = 'For GPU playback, install MPC-HC x64 with MPC Video Renderer.'
+    } elseif (-not $renderer.Available) {
+        $rendererLabel.Text = 'MPC Video Renderer x64 not found. Install it, then select it under MPC-HC Options > Playback > Output.'
+    } elseif ($renderer.Selected -and -not $renderer.Direct3D11Disabled) {
+        $rendererLabel.Text = 'Video output: MPC Video Renderer selected. GPU playback uses Direct3D 11.'
+    } else {
+        $rendererLabel.Text = 'For GPU playback select MPC Video Renderer in MPC-HC Options > Playback > Output and enable Use Direct3D 11 in its settings.'
+    }
+}
+$mpcBox.Add_CheckedChanged({ Update-RendererState })
+Update-RendererState
 function Update-BridgeState {
     $state=Get-BridgeInstalledState $mpv
     if ($state.Mpc -ne $script:currentState.Mpc) { $mpcBox.Checked=$state.Mpc }
     if ($state.Mpv -ne $script:currentState.Mpv) { $mpvBox.Checked=$state.Mpv }
     if ($state.Thumbnails -ne $script:currentState.Thumbnails) { $thumbBox.Checked=$state.Thumbnails }
+    $filterLabel.Text=if($state.SourcePath) {
+        $version=if($state.SourceVersion){$state.SourceVersion}else{'File missing or version unavailable'}
+        "X-OCN filter: $version ($($state.SourceScope))`n$($state.SourcePath)"
+    } else { 'X-OCN filter: Not registered' }
     $mpcBox.Text='MPC-HC playback' + $(if($state.Mpc){'  •  Installed'}else{'  •  Not installed'})
     $mpvBox.Text='mpv playback' + $(if($state.Mpv){'  •  Installed'}else{'  •  Not installed'})
     $thumbBox.Text='Windows Explorer thumbnails' + $(if($state.Thumbnails){'  •  Installed'}else{'  •  Not installed'})
@@ -80,16 +101,16 @@ $timer=New-Object Windows.Forms.Timer
 $timer.Interval=3000
 $timer.Add_Tick({ Update-BridgeState })
 $timer.Start()
-$install=Button 'Install selected' 36 531 200
-$restore=Button 'Restore previous state' 251 531 210
-$uninstall=Button 'Uninstall' 476 531 155
-$status=Label 'Restore and uninstall return replaced files and settings to their saved state.' 36 586 700 44
+$install=Button 'Install selected' 36 671 200
+$restore=Button 'Restore previous state' 251 671 210
+$uninstall=Button 'Uninstall' 476 671 155
+$status=Label 'Restore and uninstall return replaced files and settings to their saved state.' 36 726 700 44
 $status.ForeColor=[Drawing.Color]::FromArgb(164,179,194)
-$notice=Label 'No SonyRawDev? Install one of these Sony applications:' 36 634 700 24
+$notice=Label 'No SonyRawDev? Install one of these Sony applications:' 36 774 700 24
 $notice.ForeColor=[Drawing.Color]::FromArgb(164,179,194)
 function DownloadLink([string]$text,[string]$url,[int]$x,[int]$width) {
     $link=New-Object Windows.Forms.LinkLabel
-    $link.Text=$text; $link.SetBounds($x,662,$width,25)
+    $link.Text=$text; $link.SetBounds($x,802,$width,25)
     $link.LinkColor=[Drawing.Color]::FromArgb(115,199,236)
     $link.ActiveLinkColor=[Drawing.Color]::White
     $link.Tag=$url
@@ -100,9 +121,10 @@ function DownloadLink([string]$text,[string]$url,[int]$x,[int]$width) {
     $form.Controls.Add($link)
 }
 DownloadLink 'RAW Viewer' 'https://www.sony.com/electronics/support/software/00408235' 36 115
-$null=Label 'or' 155 662 30 25
+$null=Label 'or' 155 802 30 25
 DownloadLink 'Catalyst Prepare' 'https://support.d-imaging.sony.co.jp/disoft_DL/CatalystPrepareV3_DL/win?fm=en' 187 180
-$footer=Label 'v1.13.2026.1114  |  Authored by magoowa  |  fx5-xocn-tools, Microsoft and AviSynth+ contributors' 36 724 710 45
+$setupVersion = (Get-Content -LiteralPath "$PSScriptRoot\manifest.json" -Raw | ConvertFrom-Json).version
+$footer=Label "$setupVersion  |  Authored by magoowa  |  fx5-xocn-tools, Microsoft and AviSynth+ contributors" 36 864 710 45
 $footer.ForeColor=[Drawing.Color]::FromArgb(164,179,194); $footer.Font=New-Object Drawing.Font('Segoe UI',8)
 function Refresh-SoftwareDetection {
     $previous=if($sonyBox.SelectedIndex -ge 0){$script:sonyPaths[$sonyBox.SelectedIndex]}else{$null}
@@ -112,6 +134,7 @@ function Refresh-SoftwareDetection {
     $mpvVersion=if($mpv){[Diagnostics.FileVersionInfo]::GetVersionInfo($mpv).FileVersion}else{'Not found'}
     $mpcLabel.Text="MPC-HC:  $mpcVersion`n$player"
     $mpvLabel.Text="mpv:  $mpvVersion`n$mpv"
+    Update-RendererState
     $paths=@($libraries | Select-Object -Unique | Where-Object {Test-Path -LiteralPath $_ -PathType Leaf})
     $script:sonyPaths=$paths
     $sonyBox.BeginUpdate(); $sonyBox.Items.Clear(); $selection=-1
@@ -133,7 +156,8 @@ $install.Add_Click({
         $install.Enabled=$false; $form.Cursor=[Windows.Forms.Cursors]::WaitCursor
         if ($mpcBox.Checked -and -not $player) { throw 'MPC-HC x64 was not found.' }
         $chosenSony=if($sonyBox.SelectedIndex -ge 0){$sonyPaths[$sonyBox.SelectedIndex]}else{$null}
-        Install-Bridge $mpcBox.Checked $mpvBox.Checked $thumbBox.Checked $chosenSony $mpv
+        Install-Bridge $mpcBox.Checked ($mpvBox.Enabled -and $mpvBox.Checked) $thumbBox.Checked $chosenSony $mpv ($scope.SelectedIndex -eq 1) $(if($rendererBox.Enabled -and $rendererBox.Checked){$player})
+        Update-RendererState
         [Windows.Forms.MessageBox]::Show('Installation complete. Restart MPC-HC or mpv.','X-OCN Playback Bridge') | Out-Null
     } catch { [Windows.Forms.MessageBox]::Show($_.Exception.Message,'Installation failed','OK','Error') | Out-Null }
     finally { $install.Enabled=$true; $form.Cursor=[Windows.Forms.Cursors]::Default }
@@ -141,18 +165,28 @@ $install.Add_Click({
 $doRestore={
     try {
         if(Get-Process mpc-hc,mpc-hc64,mpv -ErrorAction SilentlyContinue){throw 'Close MPC-HC and mpv first.'}
-        Restore-BridgeJournal $journalPath
+        $restorePath=if($scope.SelectedIndex -eq 1){Join-Path $env:ProgramFiles 'XOCN-Playback-Bridge\install-state\installation.json'}else{$journalPath}
+        Restore-BridgeJournal $restorePath
         [Windows.Forms.MessageBox]::Show('Previous state restored.','X-OCN Playback Bridge') | Out-Null
     } catch { [Windows.Forms.MessageBox]::Show($_.Exception.Message,'Restore failed','OK','Error') | Out-Null }
 }
 $restore.Add_Click($doRestore); $uninstall.Add_Click($doRestore)
-$graphics=[Drawing.Graphics]::FromHwnd([IntPtr]::Zero)
-try { $scale=[Math]::Max(1.0,$graphics.DpiX / 96.0) } finally { $graphics.Dispose() }
-if ($scale -ne 1.0) {
+# Apply the same scale once to every control after the form has a monitor.
+$form.Add_Load({
+    $dpi = [SetupDisplay]::GetDpiForWindow($form.Handle)
+    $scale = if ($dpi) { $dpi / 96.0 } else { 1.0 }
     foreach ($control in $form.Controls) {
-        $control.SetBounds([int]($control.Left*$scale),[int]($control.Top*$scale),[int]($control.Width*$scale),[int]($control.Height*$scale))
+        $control.SetBounds([int]($control.Left*$scale), [int]($control.Top*$scale),
+            [int]($control.Width*$scale), [int]($control.Height*$scale))
     }
-    $form.ClientSize=New-Object Drawing.Size([int](780*$scale),[int](790*$scale))
-}
-[void]$form.ShowDialog()
-$timer.Stop(); $timer.Dispose(); $picture.Image.Dispose(); $form.Dispose()
+    $area = [Windows.Forms.Screen]::FromHandle($form.Handle).WorkingArea
+    $form.ClientSize = New-Object Drawing.Size(
+        [Math]::Min([int](780*$scale),$area.Width-32),
+        [Math]::Min([int](930*$scale),$area.Height-72))
+    $form.AutoScroll = $form.ClientSize.Width -lt [int](780*$scale) -or
+                       $form.ClientSize.Height -lt [int](930*$scale)
+})
+$form.ResumeLayout($true)
+$form.Add_FormClosing({ $timer.Stop() })
+try { [void]$form.ShowDialog() }
+finally { $timer.Dispose(); $form.Dispose() }

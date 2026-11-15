@@ -56,3 +56,35 @@ $library = $libraries | Select-Object -Unique | Where-Object {
 } | Select-Object -First 1
 
 
+
+function Get-BridgeOpenClStatus {
+    if (-not (Test-Path -LiteralPath (Join-Path ([Environment]::SystemDirectory) 'OpenCL.dll') -PathType Leaf)) {
+        return 'System loader unavailable'
+    }
+    try {
+        if (-not ('XocnSetup.OpenCl' -as [type])) {
+            Add-Type -Namespace XocnSetup -Name OpenCl -MemberDefinition @"
+[System.Runtime.InteropServices.DllImport("OpenCL.dll")]
+public static extern int clGetPlatformIDs(uint capacity, [System.Runtime.InteropServices.Out] System.IntPtr[] platforms, out uint count);
+[System.Runtime.InteropServices.DllImport("OpenCL.dll")]
+public static extern int clGetDeviceIDs(System.IntPtr platform, ulong type, uint capacity, System.IntPtr devices, out uint count);
+"@ -ErrorAction Stop
+        }
+        [uint32]$count = 0
+        if ([XocnSetup.OpenCl]::clGetPlatformIDs(0, $null, [ref]$count) -ne 0 -or $count -eq 0) {
+            return 'No platform found'
+        }
+        $platforms = New-Object 'System.IntPtr[]' $count
+        if ([XocnSetup.OpenCl]::clGetPlatformIDs($count, $platforms, [ref]$count) -ne 0) {
+            return 'Platform query failed'
+        }
+        foreach ($platform in $platforms) {
+            if ([XocnSetup.OpenCl]::clGetDeviceIDs($platform, 4, 0, [IntPtr]::Zero, [ref]$count) -eq 0 -and $count -gt 0) {
+                return 'GPU detected'
+            }
+        }
+        return 'No GPU detected'
+    } catch {
+        return 'GPU query failed'
+    }
+}

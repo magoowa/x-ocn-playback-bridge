@@ -49,6 +49,62 @@ struct Clip {
     unsigned cropX = 0, cropY = 0, cropW = 0, cropH = 0;
     unsigned rate = 0, bits = 0, channels = 0, audioBytes = 0;
     bool floatAudio = false;
+    std::string cameraModel, lookReference;
+
+    void ReadLookReference(const Bytes& metadata) {
+        if (!lookReference.empty()) return;
+        const std::string text(metadata.begin(), metadata.end());
+        for (const char* prefix : {"LUT:", "EMB1:"}) {
+            auto start = text.find(prefix);
+            if (start == std::string::npos) continue;
+            const auto end = text.find(".cube", start);
+            if (end == std::string::npos || end - start > 100) continue;
+            auto value = text.substr(start, end + 5 - start);
+            if (std::all_of(value.begin(), value.end(), [](unsigned char c) {
+                return (c >= ' ' && c <= '~' && c != '"' && c != '<' && c != '>');
+            })) {
+                lookReference = std::move(value);
+                return;
+            }
+        }
+    }
+
+    void ReadCameraModel(const std::string& text) {
+        const auto device = text.find("<Device ");
+        const auto end = text.find('>', device);
+        auto model = text.find("modelName=\"", device);
+        if (model != std::string::npos && model < end) {
+            model += 11;
+            const auto close = text.find('"', model);
+            if (close != std::string::npos && close < end && close - model <= 96) {
+                auto value = text.substr(model, close - model);
+                if (!value.empty() && value != "MODEL-NAME") cameraModel = std::move(value);
+            }
+        }
+        if (cameraModel.empty()) {
+            const auto name = text.find("name=\"CameraAttributes\"");
+            const auto item = text.rfind('<', name);
+            const auto itemEnd = text.find('>', name);
+            const auto value = text.find("value=\"", item);
+            if (name != std::string::npos && item != std::string::npos &&
+                itemEnd != std::string::npos && value != std::string::npos && value < itemEnd) {
+                const auto start = value + 7;
+                const auto close = text.find('"', start);
+                if (close != std::string::npos && close < itemEnd) {
+                    const auto tokenEnd = text.find(' ', start);
+                    const auto length = (std::min)(close, tokenEnd) - start;
+                    if (length && length <= 96) {
+                        auto model = text.substr(start, length);
+                        if (model != "MODEL-NAME") cameraModel = std::move(model);
+                    }
+                }
+            }
+        }
+        if (cameraModel == "MPC-2610" || cameraModel == "BURANO/CineAltaB") cameraModel = "BURANO (MPC-2610)";
+        if (cameraModel == "MPC-3628") cameraModel = "VENICE 2 8.6K (MPC-3628)";
+        if (cameraModel == "MPC-3626") cameraModel = "VENICE 2 6K (MPC-3626)";
+        if (cameraModel == "MPC-3610") cameraModel = "VENICE 1 (MPC-3610)";
+    }
 
     void Descriptor(const Bytes& data, bool picture) {
         for (size_t at = 0; at + 4 <= data.size();) {
@@ -96,6 +152,7 @@ struct Clip {
         Bytes header(headerBytes);
         if (_fseeki64(f, 0, SEEK_SET) || fread(header.data(), 1, header.size(), f) != header.size()) return false;
         const std::string text(header.begin(), header.end());
+        ReadCameraModel(text);
         auto readCode = [&](const char* name) -> unsigned {
             const auto tag = text.find(std::string("name=\"") + name + "\"");
             if (tag == std::string::npos) return 0;
@@ -151,6 +208,7 @@ struct Clip {
                 }
             } else if (offset <= (16 << 20) && length && length <= 65536) {
                 if (!Read(f, item, data)) return false;
+                ReadLookReference(data);
                 static constexpr char labelText[] = "audioCodec=\"FLOAT32\"";
                 floatLabel |= std::search(data.begin(), data.end(), labelText,
                                           labelText + sizeof(labelText) - 1) != data.end();
@@ -223,6 +281,11 @@ class Decoder {
     Destroy destroy = nullptr;
     Develop develop = nullptr;
     Buffer buffer;
+    Buffer gpuBuffer;
+    void* gpuDev = nullptr;
+    Create createDevice = nullptr;
+    Control initializeDevice = nullptr;
+    std::array<unsigned, 22> deviceSettings{};
     std::array<std::vector<uint16_t>, 3> planes;
     std::array<std::array<uint8_t, 65536>, 2> display{};
     std::atomic<unsigned> displayMode{0};
@@ -253,12 +316,65 @@ public:
     unsigned width = 0, height = 0;
     unsigned Stride() const { return (width * 3 + 3) & ~3u; }
     unsigned Size() const { return Stride() * height; }
+    unsigned StoredWidth() const { return storedW; }
+    unsigned StoredHeight() const { return storedH; }
+    unsigned CropLeft() const { return left; }
+    unsigned CropTop() const { return top; }
+    const uint16_t* Plane(unsigned index) const { return index < planes.size() ? planes[index].data() : nullptr; }
+    const uint8_t* DisplayTable() const { return display[displayMode.load(std::memory_order_acquire)].data(); }
+
+    bool CanPreviewXt() const {
+        return deviceSettings[1] == 9 && width == 8192 && height == 4320;
+    }
+
+    bool StartGpu(void* device, void* context, void* const* buffers, unsigned sonyScale) {
+        auto settings = deviceSettings;
+        if (sonyScale) {
+            // SonyRawDev 6.0 Control6 mode observed in Catalyst's XT playback.
+            settings = {1, deviceSettings[1], storedW, storedH, width, height,
+                        sonyScale == 4 ? 0x300u : 0x100u, 0, 0, 10000, 0, 0x3f800000, 2};
+            const auto attribute = Symbol<Attribute>("?getAttribute@SonyRawDev@sony_raw_dev@@UEBAHPEBURawDevControl6@2@PEAURawDevAttribute@2@@Z");
+            if (!attribute) return false;
+            settings[14] = settings[16] = 1;
+            memcpy(reinterpret_cast<unsigned char*>(settings.data()) + 72, &device, sizeof(device));
+            memcpy(reinterpret_cast<unsigned char*>(settings.data()) + 80, &context, sizeof(context));
+            alignas(16) unsigned attributes[2048]{};
+            if (attribute(dev, settings.data(), attributes) || attributes[6] != width / sonyScale ||
+                attributes[9] != height / sonyScale || attributes[12] != 8) return false;
+        }
+        settings[14] = 1;
+        settings[16] = 1;
+        memcpy(reinterpret_cast<unsigned char*>(settings.data()) + 72, &device, sizeof(device));
+        memcpy(reinterpret_cast<unsigned char*>(settings.data()) + 80, &context, sizeof(context));
+        gpuDev = createDevice();
+        if (!gpuDev || initializeDevice(gpuDev, settings.data())) {
+            StopGpu();
+            return false;
+        }
+        if (sonyScale) {
+            gpuBuffer = {};
+            gpuBuffer.data[0] = buffers[0];
+            gpuBuffer.size[0] = (width / sonyScale) * (height / sonyScale) * 8;
+            return true;
+        }
+        gpuBuffer = buffer;
+        std::copy_n(buffers, 3, gpuBuffer.data);
+        return true;
+    }
+    void StopGpu() { if (gpuDev) { destroy(gpuDev); gpuDev = nullptr; } }
+    HRESULT DecodeGpu(const Bytes& frame) {
+        if (frame.size() < 64 || BE(frame.data(), 4) != magic ||
+            BE(&frame[8], 2) != storedW || 2 * BE(&frame[10], 2) != storedH)
+            return VFW_E_INVALID_FILE_FORMAT;
+        return develop(gpuDev, frame.data(), unsigned(frame.size()), &gpuBuffer) ? E_FAIL : S_OK;
+    }
 
     Decoder() = default;
     Decoder(const Decoder&) = delete;
     ~Decoder() {
         for (const auto& band : bands)
             if (band.work) CloseThreadpoolWork(band.work);
+        StopGpu();
         if (dev) destroy(dev);
         if (module) FreeLibrary(module);
     }
@@ -285,7 +401,9 @@ public:
         wchar_t configured[MAX_PATH * 4]{};
         DWORD configuredBytes = sizeof(configured);
         if (RegGetValueW(HKEY_CURRENT_USER, L"Software\\XOCN-MPC", L"SonyRawDevPath", RRF_RT_REG_SZ,
-                         nullptr, configured, &configuredBytes) == ERROR_SUCCESS && configured[0]) {
+                         nullptr, configured, &configuredBytes) == ERROR_SUCCESS && configured[0] ||
+            (configuredBytes = sizeof(configured), RegGetValueW(HKEY_LOCAL_MACHINE, L"Software\\XOCN-MPC", L"SonyRawDevPath",
+                RRF_RT_REG_SZ, nullptr, configured, &configuredBytes) == ERROR_SUCCESS && configured[0])) {
             module = LoadLibraryExW(configured, nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
             if (!module) return HRESULT_FROM_WIN32(GetLastError());
         } else {
@@ -320,6 +438,9 @@ public:
             status = attribute(dev, settings, attributes);
         }
         if (status || init(dev, settings)) return VFW_E_INVALID_FILE_FORMAT;
+        createDevice = create;
+        initializeDevice = init;
+        std::copy_n(settings, 22, deviceSettings.begin());
         for (unsigned n = 0; n < 3; ++n) {
             // Reject plane layouts other than tightly packed 16-bit Bayer planes.
             const auto expectedW = n == 1 ? storedW : storedW / 2;
