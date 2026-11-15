@@ -1,5 +1,5 @@
 ﻿<p align="center">
-  <picture><source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.png"><img src="assets/logo.png" alt="X-OCN Playback Bridge" width="620"></picture>
+  <picture><img src="assets/logo.png" alt="X-OCN Playback Bridge" width="720"></picture>
 </p>
 
 X-OCN Playback Bridge makes all your precious CineAlta files behave like any other MP4 or MOV clips in your system - because why they wouldn't? Enjoy Sony X-OCN MXF clips from the comfort of **MPC-HC** or **mpv**, and generate Explorer thumbnails on Windows. The bridge auto-detects and uses your local Sony RAW library - if you don't have one, the links are provided within the installer.
