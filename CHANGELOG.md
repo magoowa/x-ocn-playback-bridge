@@ -2,6 +2,23 @@
 
 The DirectShow filter, thumbnail provider and installer have separate version numbers. Earlier development builds were not all published as releases.
 
+## 1.23.2026.1115 — 2026-11-15
+
+- Show the detected MPC-HC version and MPC Video Renderer status in setup.
+- Offer to select MPC Video Renderer and enable Direct3D 11 for the current user during installation. Portable installations show manual instructions.
+- Document why shared Direct3D 11 textures avoid copying full decoded frames through system memory.
+
+## 1.22.2026.1115 — 2026-11-15
+
+- Prefer shared Direct3D 11 textures for all supported X-OCN clips in Automatic mode when the GPU and renderer support sharing. Verified on FX5, BURANO and VENICE 2 footage.
+- Fix an out-of-range error when setup closes with an empty PowerShell error stream.
+
+## 1.21.2026.1115 — 2026-11-15
+
+- Add full-resolution GPU playback for supported 8192 × 4320 X-OCN XT clips in MPC-HC with NVIDIA OpenCL and MPC Video Renderer.
+- Rename the filter to X-OCN Playback Bridge, standardize camera labels and remove the incorrect PMW-F55 inference from the codec tag.
+- Show system OpenCL GPU detection in setup and the filter properties.
+
 ## Installer 1.13.2026.1114 — 2026-11-14
 
 - Shows the detected installation status of MPC-HC, mpv and Explorer thumbnails, and provides links to Sony RAW Viewer and Catalyst Prepare.
