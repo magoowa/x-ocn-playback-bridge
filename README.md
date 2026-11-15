@@ -10,7 +10,7 @@ X-OCN Playback Bridge makes all your precious CineAlta files behave like any oth
 2. Close MPC-HC and mpv, then run the installer. Windows will request administrator permission for system integration.
 3. Select MPC-HC, mpv, Explorer thumbnails, or a combination. Open an X-OCN MXF in your player.
 
-The installer detects MPC-HC, mpv and **SonyRawDev 6.0 or later**. Setup and filter properties also report whether the system OpenCL runtime sees a GPU. It looks in installed DaVinci Resolve, Sony RAW Viewer, Sony Catalyst and Adobe Premiere Pro locations, including common per-user paths. If needed, install [Sony RAW Viewer](https://www.sony.com/electronics/support/software/00408235) or [Catalyst Prepare](https://support.d-imaging.sony.co.jp/disoft_DL/CatalystPrepareV3_DL/win?fm=en). The installer does not change Windows file associations. Portable installations and unusual paths may require manual setup.
+The installer detects [MPC-HC](https://github.com/clsid2/mpc-hc), mpv and **SonyRawDev 6.0 or later**. Setup and filter properties also report whether the system OpenCL runtime sees a GPU. It looks in installed DaVinci Resolve, Sony RAW Viewer, Sony Catalyst and Adobe Premiere Pro locations, including common per-user paths. If needed, install [Sony RAW Viewer](https://www.sony.com/electronics/support/software/00408235) or [Catalyst Prepare](https://support.d-imaging.sony.co.jp/disoft_DL/CatalystPrepareV3_DL/win?fm=en). The installer does not change Windows file associations. Portable installations and unusual paths may require manual setup.
 
 ## MPC Video Renderer for GPU playback
 
